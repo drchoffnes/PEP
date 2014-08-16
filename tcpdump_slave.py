@@ -28,10 +28,14 @@ def kill_tcpdump(filename):
 		if filename in line:
 			pid = int(line.split(None, 2)[1])
 			os.system("kill " + str(pid))
+	tcpdumps_lock.acquire()
 	del tcpdumps[filename]
+	tcpdumps_lock.release()
 
 def start_log(filename):
+	tcpdumps_lock.acquire()
 	tcpdumps[filename] = int(time.time())
+	tcpdumps_lock.release()
 	p = Process(target=tcpdump_on_another_process, args=(filename,))
 	p.start()
 	
@@ -61,6 +65,7 @@ class ThreadedHTTPServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
 	"""Handle requests in a separate thread."""
 
 if __name__ == '__main__':
+	tcpdumps_lock = threading.Lock()
 	thread = threading.Thread(target=tcpdump_cleaner)
 	server = ThreadedHTTPServer((HOST_NAME, HOST_PORT), MyHandler)
 
