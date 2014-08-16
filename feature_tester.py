@@ -9,12 +9,12 @@ def fprint(s):
 
 # start to log TCP traces on |SERVER|, with filename |logfile|
 def start_tcpdump(logfile):
-	request(SERVER + ":9888", fileobject="tcpdump?start&" + logfile)
+	request(SERVER + ":9999", fileobject="tcpdump?start&" + logfile)
 	return
 
 # stop to log TCP traces |logfile|, and scp |logfile| from |SERVER| to local |local_filename|
 def stop_tcpdump(logfile):
-	request(SERVER + ":9888", fileobject="tcpdump?stop&" + logfile)
+	request(SERVER + ":9999", fileobject="tcpdump?stop&" + logfile)
 	time.sleep(2)
 	os.system("wget " + SERVER + "/PEP/" + logfile + " -q -O " + label + "/" + logfile)
 	if os.path.getsize(label + "/" + logfile) == 0:
@@ -88,7 +88,6 @@ def request(ip=SERVER, hostname="", fileobject="", saveto="temp", extra_headers=
 		extra_headers = {}
 	web = httplib.HTTPConnection(ip)
 	headers = extra_headers
-	print headers
 	if len(hostname) > 0:
 		headers["Host"] = hostname
 	headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 4.2; Nexus 7 Build/JOP40C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Safari/535.19"
