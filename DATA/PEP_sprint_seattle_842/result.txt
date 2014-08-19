@@ -1,0 +1,9 @@
+Redirection:
+Content Rewriting:
+	image transcoding!
+	css transcoding!
+	javascript transcoding!
+	html transcoding!
+Caching:
+Connection Persistence:
+Delayed Handshaking:
