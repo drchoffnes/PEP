@@ -3,8 +3,8 @@ import httplib, os, string, random, time, socket, subprocess
 from multiprocessing import Process
 
 SERVER = '128.125.121.204'
-HOSTS = ['youtube.com']
-TCPDUMP_CMD = 'sudo tcpdump -s0 -v port 80 -q -w '
+HOSTS = {'youtube.com': ['208.54.39.44']}
+TCPDUMP_CMD = 'sudo tcpdump -i usb0 -s0 -v port 80 -q -w '
 
 def fprint(s):
 	f_out.write(s + "\r\n")
@@ -26,28 +26,28 @@ def stop_tcpdump():
 		if "tcpdump" in line:
 			pid = int(line.split(None, 2)[1])
 			os.system("sudo kill " + str(pid))
+			
+def hand_shake(dest):
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((dest, 80))
+	time.sleep(1)
+	s.close()
 
 def test():	
 	for h in HOSTS:
 		start_tcpdump(label + "/" + h)
-		time.sleep(1)
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect((SERVER, 80))		
+		time.sleep(3)
+		hand_shake(SERVER)
+
+		for d in HOSTS[h]:
+			print d
+			hand_shake(d)
+				
 		ips = {}
 		for t in range(20):
-			# get a ip that we have not used
-			ip = socket.gethostbyname(h)		
-			#while ip in ips:
-			#	print "occurred: ", ip, ips			
-			#	ip = socket.gethostbyname(h)
-			#ips[ip] = 0
-			
-			#print ip
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			s.connect((h, 80))
-			time.sleep(1)
-			s.close()
-		time.sleep(1)			
+			hand_shake(h)
+
+		time.sleep(3)			
 		stop_tcpdump()
 
 if __name__ == "__main__":
