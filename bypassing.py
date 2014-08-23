@@ -3,8 +3,6 @@ import httplib, os, string, random, time, socket, subprocess
 from multiprocessing import Process
 
 SERVER = '128.125.121.204'
-HOSTS = {'r14---sn-nx57yn76.googlevideo.com': ['208.54.39.44', '208.54.5.44', '208.54.5.45']} # Youtubey
-TIMER = 10
 
 def fprint(s):
 	f_out.write(s + "\r\n")
@@ -32,32 +30,52 @@ def hand_shake(dest):
 	time.sleep(1)
 	s.send("GET /non_exist_file_")
 	s.close()
+	
+def request(ip=SERVER, hostname="", fileobject="", saveto="temp", extra_headers=None):
+	if extra_headers == None:
+		extra_headers = {}
+	web = httplib.HTTPConnection(ip)
+	headers = extra_headers
+	if len(hostname) > 0:
+		headers["Host"] = hostname
+	#headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 4.2; Nexus 7 Build/JOP40C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Safari/535.19"
+	web.request("GET", "/" + fileobject, headers=headers)
+	response = web.getresponse()
+  # save to file |saveto|
+	f = open(saveto, "w")
+	f.write(response.read())
 
-def test():	
-	for h in HOSTS:
-		start_tcpdump(label + "/" + h)
-		time.sleep(3)
-		hand_shake(SERVER)
+def test():
+	urls = {}
+	request(ip="www.youtube.com")
+	lines = open("temp").readlines()
+	for l in lines:
+		s = l.find("watch?")
+		if s != -1:
+			e = l.find("\"", s + 1)
+			urls[l[s:e]] = 0
 
-		for d in HOSTS[h]:
-			hand_shake(d)
-				
-		ips = {}
-		time_start = time.time()
-		while True:
-			ip = socket.gethostbyname(h)
-			while ip in ips:
-				if time.time() - time_start > TIMER:
-					break
-				ip = socket.gethostbyname(h)
-				print ip
-			if time.time() - time_start > TIMER:
-				break	
-			print ip
-			ips[ip] = 0
-			hand_shake(ip)
-		time.sleep(3)
-		stop_tcpdump()
+	if len(urls) == 0:
+		print "Youtube is not responding, please retry"
+		exit()
+	ips = {}
+	for url in urls:
+		print url
+		request(ip="www.youtube.com", fileobject=url)
+		lines = open("temp").readlines()
+		for l in lines:
+			s = l.find("googlevideo.com\/generate_204")
+			ss = l.rfind("/", 0, s - 1)
+			if s != -1:
+				ips[l[ss + 1:s] + "googlevideo.com"] = 0
+	start_tcpdump(label + "/youtube.pcap")
+	time.sleep(3)
+	hand_shake(SERVER)
+	for ip in ips:
+		print ip
+		hand_shake(ip)
+	time.sleep(3)
+	stop_tcpdump()
 
 if __name__ == "__main__":
 	random.seed()
